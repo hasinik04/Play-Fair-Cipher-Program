@@ -1,10 +1,7 @@
 ## EX. NO:2 IMPLEMENTATION OF PLAYFAIR CIPHER
 
- 
 
 ## AIM:
- 
-
  
 
 To write a C program to implement the Playfair Substitution technique.
@@ -34,10 +31,168 @@ STEP-5: Display the obtained cipher text.
 
 
 
-Program:
+## Program:
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 100
+
+// Convert string to lowercase
+void toLowerCase(char text[], int length) {
+    for (int i = 0; i < length; i++) {
+        text[i] = tolower(text[i]);
+    }
+}
+
+// Remove spaces from string
+int removeSpaces(char* text, int length) {
+    int count = 0;
+    for (int i = 0; i < length; i++) {
+        if (text[i] != ' ') {
+            text[count++] = text[i];
+        }
+    }
+    text[count] = '\0'; // Null terminate
+    return count;
+}
+
+// Generate 5x5 key square
+void generateKeyTable(char key[], int ks, char keyT[5][5]) {
+    int dicty[26] = {0};
+    int i, j, k;
+
+    // Mark used letters (excluding 'j')
+    for (i = 0; i < ks; i++) {
+        if (key[i] != 'j') {
+            dicty[key[i] - 'a'] = 1;
+        }
+    }
+    dicty['j' - 'a'] = 1; // Mark 'j' manually
+
+    i = 0, j = 0;
+    
+    // Fill key square with key
+    for (k = 0; k < ks; k++) {
+        if (dicty[key[k] - 'a'] == 1) {
+            dicty[key[k] - 'a'] = 2;
+            keyT[i][j++] = key[k];
+            if (j == 5) {
+                i++; j = 0;
+            }
+        }
+    }
+
+    // Fill remaining slots with unused letters
+    for (k = 0; k < 26; k++) {
+        if (dicty[k] == 0 && k != ('j' - 'a')) {
+            keyT[i][j++] = k + 'a';
+            if (j == 5) {
+                i++; j = 0;
+            }
+        }
+    }
+}
+
+// Find positions of two characters in key square
+void search(char keyT[5][5], char a, char b, int pos[]) {
+    if (a == 'j') a = 'i';
+    if (b == 'j') b = 'i';
+
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            if (keyT[i][j] == a) {
+                pos[0] = i;
+                pos[1] = j;
+            }
+            if (keyT[i][j] == b) {
+                pos[2] = i;
+                pos[3] = j;
+            }
+        }
+    }
+}
+
+// Modulo 5 function
+int mod5(int num) {
+    return (num % 5);
+}
+
+// Ensure even-length plaintext
+int prepareText(char str[], int length) {
+    if (length % 2 != 0) {
+        str[length++] = 'x'; // Use 'x' instead of 'z'
+        str[length] = '\0';
+    }
+    return length;
+}
+
+// Encrypt text using Playfair cipher
+void encrypt(char str[], char keyT[5][5], int length) {
+    int pos[4];
+
+    for (int i = 0; i < length; i += 2) {
+        search(keyT, str[i], str[i + 1], pos);
+
+        if (pos[0] == pos[2]) { // Same row
+            str[i] = keyT[pos[0]][mod5(pos[1] + 1)];
+            str[i + 1] = keyT[pos[0]][mod5(pos[3] + 1)];
+        } else if (pos[1] == pos[3]) { // Same column
+            str[i] = keyT[mod5(pos[0] + 1)][pos[1]];
+            str[i + 1] = keyT[mod5(pos[2] + 1)][pos[1]];
+        } else { // Rectangle swap
+            str[i] = keyT[pos[0]][pos[3]];
+            str[i + 1] = keyT[pos[2]][pos[1]];
+        }
+    }
+}
+
+// Main encryption function
+void encryptByPlayfairCipher(char str[], char key[]) {
+    int keyLen = strlen(key);
+    int textLen = strlen(str);
+    char keyT[5][5];
+
+    // Process key
+    keyLen = removeSpaces(key, keyLen);
+    toLowerCase(key, keyLen);
+
+    // Process plaintext
+    toLowerCase(str, textLen);
+    textLen = removeSpaces(str, textLen);
+    textLen = prepareText(str, textLen);
+
+    // Generate key table and encrypt
+    generateKeyTable(key, keyLen, keyT);
+    encrypt(str, keyT, textLen);
+}
+
+// Main function
+int main() {
+    char str[SIZE], key[SIZE];
+
+    // Ask user for key
+    printf("Enter key: ");
+    fgets(key, SIZE, stdin);
+    key[strcspn(key, "\n")] = '\0'; // Remove trailing newline
+
+    // Ask user for plaintext
+    printf("Enter plaintext: ");
+    fgets(str, SIZE, stdin);
+    str[strcspn(str, "\n")] = '\0'; // Remove trailing newline
+
+    encryptByPlayfairCipher(str, key);
+
+    printf("Cipher text: %s\n", str);
+
+    return 0;
+}
+
+```
 
 
 
-
-
-Output:
+## Output:
+![image](https://github.com/user-attachments/assets/4db010df-127e-4ec9-9eae-e9fc252b4f1a)
